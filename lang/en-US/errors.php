@@ -1,0 +1,65 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * en-US / errors.php — API error and success messages. Values may use {name} placeholders.
+ * Keys are the Chinese source texts; {name} placeholders are filled by loongs/language.
+ * Files in this directory are merged by filename; a later file overrides the same key (README §19).
+ */
+
+return [
+    '未登录或登录已失效' => 'Not signed in or the session has expired',
+    '无权限' => 'Permission denied',
+    '数据不存在或无权访问' => 'Not found or no access',
+    '参数错误' => 'Invalid parameters',
+    '服务繁忙，请稍后重试' => 'Service busy, please try again later',
+    '服务器内部错误' => 'Internal server error',
+    '令牌权限范围不足' => 'Insufficient token scope',
+    '请求无效' => 'Invalid request',
+    '账号不存在或已停用' => 'Account does not exist or is disabled',
+    '无权限：{codes}' => 'Permission denied: {codes}',
+    '无权修改字段：{field}（{perm}）' => 'Not allowed to modify field: {field} ({perm})',
+    '页面不存在' => 'Page not found',
+    '客户端版本过旧，请升级后再试' => 'Client is too old, please upgrade',
+    '无权限访问该页面' => 'No permission to access this page',
+    '当前客户端不支持该页面' => 'This page is not available on this client',
+    '原密码错误' => 'Current password is incorrect',
+    '密码已修改，请重新登录' => 'Password changed, please sign in again',
+    '密码已重置' => 'Password reset',
+    '用户名已存在' => 'Username already exists',
+    '不能停用自己' => 'You cannot disable yourself',
+    '超级管理员不能删除' => 'The super administrator cannot be deleted',
+    '不能删除自己' => 'You cannot delete yourself',
+    '不能修改超级管理员' => 'The super administrator cannot be modified',
+    '该部门不在你的数据权限范围内' => 'This department is outside your data scope',
+    '角色不存在' => 'Role does not exist',
+    '只能分配自己拥有的角色' => 'You can only assign roles you hold',
+    '部门不存在' => 'Department does not exist',
+    '只有超级管理员可以创建顶级部门' => 'Only the super administrator can create top-level departments',
+    '不能移动到自己或下级下面' => 'Cannot move under itself or a sub-department',
+    '请先删除下级部门' => 'Delete the sub-departments first',
+    '部门下还有管理员' => 'The department still has administrators',
+    '上级部门不存在' => 'Parent department does not exist',
+    '上级部门不在你的数据权限范围内' => 'Parent department is outside your data scope',
+    '角色编码已存在' => 'Role code already exists',
+    '权限标识必须是数组' => 'Permission codes must be an array',
+    '权限标识必须是字符串' => 'Permission codes must be strings',
+    '权限标识不存在：{codes}' => 'Unknown permission codes: {codes}',
+    '不能授予自己没有的菜单或按钮权限' => 'You cannot grant menu or button permissions you do not hold',
+    '数据范围取值无效' => 'Invalid data scope',
+    '不能授予超出自己范围的数据权限' => 'You cannot grant a data scope wider than your own',
+    '字段或权限取值无效' => 'Invalid field or permission value',
+    '不能授予超出自己的字段权限' => 'You cannot grant field permissions beyond your own',
+    '全部管理员' => 'All administrators',
+    '消息不存在' => 'Message not found',
+    '已将 {n} 条消息标为已读' => 'Marked {n} messages as read',
+    '没有未读消息' => 'No unread messages',
+    '请选择接收人' => 'Please choose recipients',
+    '接收人不存在、已停用或不在数据权限范围内：{ids}' => 'Recipients not found, disabled or outside your data scope: {ids}',
+    '没有可发送的接收人' => 'No recipients to send to',
+    '已发送给 {n} 位管理员' => 'Sent to {n} administrators',
+    '样例租户不存在' => 'Sample tenant not found',
+    '样例操作：未写入任何数据' => 'Sample action: nothing was written',
+    '未分配部门' => 'No department',
+];

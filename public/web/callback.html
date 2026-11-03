@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="referrer" content="no-referrer">
+  <title>LOONGS 登录回调</title>
+  <!-- OAuth redirect_uri for the web build (register its absolute URL on client uuims-pc).
+       Forwards ?code&state to the app's hash route and removes them from history. -->
+  <script>
+    (function () {
+      var base = location.pathname.replace(/callback\.html$/, '');
+      location.replace(base + '#/auth/callback' + location.search);
+    })();
+  </script>
+</head>
+<body>正在返回应用…</body>
+</html>
