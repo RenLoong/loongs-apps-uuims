@@ -25,6 +25,7 @@ use App\Uuims\Services\Wechat\WechatBindings;
 use App\Uuims\Services\Wechat\WechatMiniGrant;
 use App\Uuims\Support\I18n;
 use App\Uuims\Support\MenuRegistry;
+use App\Uuims\Support\LocalBearer;
 use App\Uuims\Support\OAuth;
 use App\Uuims\Support\OAuthServers;
 use App\Uuims\Support\PublicOrigin;
@@ -43,6 +44,11 @@ $config = $container->make(Repository::class);
 if (!method_exists(AuthorizationServer::class, 'registerGrant')) {
     throw new RuntimeException(
         'loongs/oauth is too old for the WeChat mini program grant: run `composer update loongs/framework loongs/oauth`.'
+    );
+}
+if (!method_exists(AuthorizationServer::class, 'localResourceServer')) {
+    throw new RuntimeException(
+        'loongs/oauth is too old for local (no-DB) JWE auth: update to SHA 18918a533d99ff330bad801580ca5f813aa42331 or later (`composer update loongs/oauth`).'
     );
 }
 
@@ -93,6 +99,9 @@ $container->singleton(OAuthServers::class, static fn (): OAuthServers => new OAu
         $oauthGrants(),
     ),
     $container->make(AuthorizationServer::class),
+));
+$container->singleton(LocalBearer::class, static fn (): LocalBearer => new LocalBearer(
+    $container->make(OAuthServers::class),
 ));
 $container->singleton(PermissionService::class, static fn (): PermissionService => new PermissionService(
     $container->make(CacheManager::class),

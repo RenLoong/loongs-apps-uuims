@@ -5,19 +5,22 @@ declare(strict_types=1);
 namespace App\Uuims\Services;
 
 use App\Uuims\Models\Uuims;
-use Loongs\OAuth\AuthorizationServer;
+use App\Uuims\Support\LocalBearer;
+use App\Uuims\Support\OAuthError;
 use Loongs\OAuth\Exception\OAuthException;
-use Loongs\OAuth\Http\OAuthRequest;
 use Loongs\Rpc\Contract\RpcResponse;
 
 /**
- * RPC-facing auth helpers for other apps (Erp/Mall/Wms) via $rpc->call('uuims', …).
- * Reuses the same ResourceServer + PermissionService path as UuimsAuthMiddleware.
+ * RPC-facing auth helpers for other apps (Erp/Mall/Wms/Admin) via $rpc->call('uuims', …).
+ *
+ * Auth.check validates the bearer with loongs/oauth local ResourceServer only (no DB on the
+ * token hot path). User/permission projection is loaded after successful local auth because
+ * callers need username / perms / roles beyond JWT claims (sub, scope, …).
  */
 final class AuthRpcService
 {
     public function __construct(
-        private readonly AuthorizationServer $oauth,
+        private readonly LocalBearer $bearer,
         private readonly PermissionService $permissions,
     ) {
     }
@@ -31,26 +34,19 @@ final class AuthRpcService
     {
         $token = $this->extractToken($payload);
         if ($token === null) {
-            return RpcResponse::fail(40101, '未登录或登录已失效');
+            return RpcResponse::fail(OAuthError::CODE_INVALID, '未登录或登录已失效', [
+                'error' => 'invalid_token',
+                'reason' => 'invalid',
+            ]);
         }
 
         try {
-            $info = $this->oauth->resourceServer()->authenticate(
-                OAuthRequest::fromArrays('GET', ['Authorization' => 'Bearer ' . $token]),
-                ['uuims'],
-            );
+            $info = $this->bearer->authenticateToken($token, ['uuims']);
         } catch (OAuthException $e) {
-            $o = $e->toResponse();
-            if ($o->status === 403) {
-                return RpcResponse::fail(40300, '令牌权限范围不足');
-            }
-
-            return RpcResponse::fail(
-                $o->status === 400 ? 40001 : 40101,
-                $o->status === 400 ? '请求无效' : '未登录或登录已失效',
-            );
+            return OAuthError::toRpc($e);
         }
 
+        // After local auth only — projection for RPC consumers (not token proof).
         $uuims = $info->userId === null
             ? null
             : Uuims::query()->withoutGlobalScope('data_scope')->find((int) $info->userId);

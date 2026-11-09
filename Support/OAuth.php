@@ -14,9 +14,11 @@ use Loongs\OAuth\Storage\OrmStorage;
 use Loongs\OAuth\Storage\Stores;
 
 /**
- * Builds the platform authorization server: opaque tokens, codes, families in user_platform
- * (OrmStorage); the public clients come straight from config/uuims.php (redirect URIs follow .env
- * without re-running uuims:install). Extension grants (WeChat mini program) are registered here.
+ * Builds the platform authorization server.
+ *
+ * Access tokens: JWE (FORMAT_JWE) by default so ResourceServer::local can authenticate without DB.
+ * Auth codes / refresh tokens / families stay in user_platform (OrmStorage). Public clients come
+ * from config/uuims.php. Extension grants (WeChat mini program) are registered here.
  */
 final class OAuth
 {
@@ -31,6 +33,20 @@ final class OAuth
         foreach (self::clients($cfg) as $client) {
             $clients->saveClient($client);
         }
+
+        [$signing, $encryption] = OAuthKeys::fromConfig($cfg);
+        $format = strtolower((string) ($cfg['access_token_format'] ?? ServerConfig::FORMAT_JWE));
+        if ($format !== ServerConfig::FORMAT_OPAQUE) {
+            $format = ServerConfig::FORMAT_JWE;
+        }
+        if ($format === ServerConfig::FORMAT_JWE && ($signing === null || $encryption === null || !$encryption->canEncrypt())) {
+            throw new \RuntimeException(
+                'JWE access tokens need signing + encryption keys. Run `./loongs uuims:install` '
+                . '(or `./loongs oauth:keygen jwt --encryption-dir --out=runtime/oauth`) and set '
+                . 'OAUTH_SIGNING_KEY_PATH / OAUTH_ENCRYPTION_KEY in .env.',
+            );
+        }
+
         $as = new AuthorizationServer(new ServerConfig(
             issuer: $issuer ?? (string) $cfg['issuer'],
             scopes: (array) $cfg['scopes'],
@@ -39,6 +55,9 @@ final class OAuth
             accessTokenTtl: (int) $cfg['access_token_ttl'],
             refreshTokenTtl: (int) $cfg['refresh_token_ttl'],
             tokenPepper: (string) $cfg['token_pepper'],
+            accessTokenFormat: $format,
+            signingKey: $signing,
+            encryptionKey: $encryption,
         ), new Stores(clients: $clients, codes: $orm, accessTokens: $orm, refreshTokens: $orm, families: $orm, consents: $orm));
         foreach ($grants as $type => $handler) {
             $as->registerGrant($type, $handler);
