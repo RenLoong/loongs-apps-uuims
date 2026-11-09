@@ -14,11 +14,18 @@ use Loongs\OAuth\Storage\OrmStorage;
 use Loongs\OAuth\Storage\Stores;
 
 /**
- * Builds the platform authorization server.
+ * Builds the platform authorization server (access+refresh **token pairs**).
  *
- * Access tokens: JWE (FORMAT_JWE) by default so ResourceServer::local can authenticate without DB.
- * Auth codes / refresh tokens / families stay in user_platform (OrmStorage). Public clients come
- * from config/uuims.php. Extension grants (WeChat mini program) are registered here.
+ * Pair contract (loongs/oauth families):
+ * - **Issue**: authorization_code / extension grants mint access + refresh under one family id.
+ * - **Refresh**: rotates the whole pair — new access + new refresh; old refresh is marked rotated;
+ *   replaying a rotated refresh revokes the family (`invalid_grant`).
+ * - **Validate access**: ResourceServer::local / LocalBearer — JWE decrypt/verify only, **no DB**.
+ * - **Persist**: OrmStorage keeps codes, refresh tokens, families (and access rows for revoke /
+ *   introspect). Access-token lookup is never on the Auth.check / middleware hot path.
+ *
+ * Public clients always allow `refresh_token`; rotation is always on for them. Confidential
+ * rotation stays enabled via ServerConfig::$rotateConfidentialRefreshTokens.
  */
 final class OAuth
 {
@@ -58,6 +65,9 @@ final class OAuth
             accessTokenFormat: $format,
             signingKey: $signing,
             encryptionKey: $encryption,
+            // Token-pair policy: always rotate refresh on use (public clients already must;
+            // keep confidential on the same pair-rotation contract).
+            rotateConfidentialRefreshTokens: true,
         ), new Stores(clients: $clients, codes: $orm, accessTokens: $orm, refreshTokens: $orm, families: $orm, consents: $orm));
         foreach ($grants as $type => $handler) {
             $as->registerGrant($type, $handler);
@@ -75,6 +85,8 @@ final class OAuth
     }
 
     /**
+     * Public clients with refresh_token (pair issue + full-pair refresh rotation).
+     *
      * @param array<string, mixed> $cfg
      * @return list<Client>
      */
@@ -82,8 +94,15 @@ final class OAuth
     {
         $out = [];
         foreach ((array) $cfg['clients'] as $id => $c) {
-            $out[] = Client::public((string) $id, (string) $c['name'], array_values((array) $c['redirect_uris']), array_values((array) $c['scopes']),
-                true, array_values((array) ($c['extension_grants'] ?? [])));
+            // refreshTokens: true → Client::public includes authorization_code + refresh_token
+            $out[] = Client::public(
+                (string) $id,
+                (string) $c['name'],
+                array_values((array) $c['redirect_uris']),
+                array_values((array) $c['scopes']),
+                true,
+                array_values((array) ($c['extension_grants'] ?? [])),
+            );
         }
 
         return $out;

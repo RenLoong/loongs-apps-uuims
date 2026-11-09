@@ -13,9 +13,9 @@ use Loongs\Rpc\Contract\RpcResponse;
 /**
  * RPC-facing auth helpers for other apps (Erp/Mall/Wms/Admin) via $rpc->call('uuims', …).
  *
- * Auth.check validates the bearer with loongs/oauth local ResourceServer only (no DB on the
- * token hot path). User/permission projection is loaded after successful local auth because
- * callers need username / perms / roles beyond JWT claims (sub, scope, …).
+ * Auth.check validates the **access** half of the access+refresh pair with loongs/oauth local
+ * ResourceServer only (no DB on the token hot path). Refresh rotates the whole pair at
+ * POST /oauth/token (grant_type=refresh_token). User/permission projection loads after local auth.
  */
 final class AuthRpcService
 {

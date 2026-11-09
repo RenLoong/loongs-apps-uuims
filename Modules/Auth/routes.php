@@ -71,8 +71,8 @@ $authorize = static function (Request $r) use ($resolve, $container, $jsonUris) 
 $router->get('/oauth/authorize', $authorize);
 $router->post('/oauth/authorize', $authorize);
 
-// token (authorization_code + PKCE, refresh_token rotation, WeChat mini program grant), revoke,
-// introspect, RFC 8414 metadata — each answered by the server of the request's public origin
+// token (authorization_code + PKCE → access+refresh pair; refresh_token rotates the whole pair;
+// WeChat mini program grant), revoke, introspect, RFC 8414 metadata — each answered by the server of the request's public origin
 OAuthRoutes::register($router, $resolve, static fn () => throw new LogicException('authorize is handled above'), $container->make(AuthorizationServer::class));
 
 $router->get('/uuims/api/auth/me', [ProfileController::class, 'me'], [UuimsAuthMiddleware::class]);

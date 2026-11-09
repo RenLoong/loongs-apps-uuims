@@ -9,8 +9,11 @@ use Loongs\OAuth\Http\OAuthRequest;
 use Loongs\OAuth\TokenInfo;
 
 /**
- * Hot-path bearer auth: loongs/oauth ResourceServer::local only (JWE decrypt/verify/claims).
- * No access-token store / DB lookup. Multi-issuer: prefer the token's allow-listed `iss`.
+ * Hot-path bearer auth for the **access** half of an access+refresh token pair.
+ *
+ * Uses loongs/oauth ResourceServer::local only (JWE decrypt/verify/claims). No access-token
+ * store / DB lookup. Multi-issuer: prefer the token's allow-listed `iss`.
+ * Refresh / family rotation stays on AuthorizationServer::token (OrmStorage).
  */
 final class LocalBearer
 {

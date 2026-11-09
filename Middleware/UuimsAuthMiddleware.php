@@ -18,13 +18,14 @@ use Loongs\OAuth\Exception\OAuthException;
 use Loongs\OAuth\Framework\Bridge;
 
 /**
- * Bearer token via loongs/oauth local ResourceServer (JWE only, no DB on validate) → enabled uuims
- * → permission context (UuimsContext + request attribute "user_ctx").
+ * Bearer **access** token (half of the access+refresh pair) via loongs/oauth local ResourceServer
+ * (JWE only, no DB on validate) → enabled uuims → permission context (UuimsContext + attribute "user_ctx").
  *
- * Token validation never hits the database. User/permission rows load only after local auth succeeds,
- * because HTTP handlers need RBAC context beyond JWT claims.
+ * Pair lifecycle (issue / refresh rotation / family revoke) is handled by AuthorizationServer +
+ * OrmStorage, not this middleware. Token validation never hits the database. User/permission rows
+ * load only after local auth succeeds (RBAC beyond JWT claims).
  *
- * 40103 expired (client may refresh); 40104 revoked / 40101 invalid (re-login); 40300 insufficient scope.
+ * 40103 expired (client may refresh the pair); 40104 revoked / 40101 invalid (re-login); 40300 insufficient scope.
  */
 final class UuimsAuthMiddleware implements MiddlewareInterface
 {
