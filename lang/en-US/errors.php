@@ -62,4 +62,6 @@ return [
     '样例租户不存在' => 'Sample tenant not found',
     '样例操作：未写入任何数据' => 'Sample action: nothing was written',
     '未分配部门' => 'No department',
+    '访问令牌已过期' => 'Access token expired',
+    '访问令牌已撤销' => 'Access token revoked',
 ];
